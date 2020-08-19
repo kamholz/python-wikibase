@@ -28,6 +28,19 @@ value = py_wb.ExternalId().create("ID123")
 claim = item.claims.add(prop, value)
 ```
 
+## Url
+
+Adding a `Url` claim to an item:
+
+```py
+item = py_wb.Item().get(entity_id="Q1")
+prop = py_wb.Property().get(entity_id="P1")
+
+value = py_wb.Url().create("https://www.wikidata.org")
+
+claim = item.claims.add(prop, value)
+```
+
 ## GeoLocation
 
 Adding a `GeoLocation` claim to an item:

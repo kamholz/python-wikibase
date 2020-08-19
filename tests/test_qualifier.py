@@ -37,6 +37,16 @@ class TestQualifier:
         assert str(qualifier.value) == external_id.external_id
         assert qualifier.value.marshal() == external_id.marshal()
 
+    # Url
+
+    def test_url(self, py_wb, claim, prop_url):
+        url = py_wb.Url().create("https://www.wikidata.org")
+        qualifier = claim.qualifiers.add(prop_url, url)
+        assert qualifier.property.data_type == "Url"
+        assert qualifier.value.url == url.url
+        assert str(qualifier.value) == url.url
+        assert qualifier.value.marshal() == url.marshal()
+
     # GeoLocation
 
     def test_geo_location(self, py_wb, claim, prop_geo_location):

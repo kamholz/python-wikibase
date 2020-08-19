@@ -37,6 +37,16 @@ class TestClaim:
         assert str(claim.value) == external_id.external_id
         assert claim.value.marshal() == external_id.marshal()
 
+    # Url
+
+    def test_url(self, py_wb, item, prop_url):
+        url = py_wb.Url().create("https://www.wikidata.org")
+        claim = item.claims.add(prop_url, url)
+        assert claim.property.data_type == "Url"
+        assert claim.value.url == url.url
+        assert str(claim.value) == url.url
+        assert claim.value.marshal() == url.marshal()
+
     # GeoLocation
 
     def test_geo_location(self, py_wb, item, prop_geo_location):

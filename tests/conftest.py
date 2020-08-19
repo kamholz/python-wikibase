@@ -9,6 +9,7 @@ from tests.constants import (
     LANGUAGE,
     PROP_EXTERNAL_ID_LABEL,
     PROP_GEO_LOCATION_LABEL,
+    PROP_URL_LABEL,
     PROP_ITEM_LABEL,
     PROP_LABEL,
     PROP_QUANTITY_LABEL,
@@ -85,6 +86,12 @@ def prop_external_id(py_wb):
     yield prop
     prop.delete()
 
+@pytest.fixture(scope="function")
+def prop_url(py_wb):
+    prop = py_wb.Property().create(PROP_URL_LABEL, data_type="Url")
+    assert prop.label.get(LANGUAGE) == PROP_URL_LABEL
+    yield prop
+    prop.delete()
 
 @pytest.fixture(scope="function")
 def prop_item(py_wb):

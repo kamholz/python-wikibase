@@ -36,7 +36,7 @@ def unmarshal_data_value(py_wb, main_snak):
     if data_type in ["monolingualtext", "string"]:
         return py_wb.StringValue().unmarshal(data_value)
     elif data_type == "commonsMedia":
-        raise NotImplementedError  # TODO
+        return py_wb.CommonsMedia().unmarshal(data_value)
     elif data_type == "external-id":
         return py_wb.ExternalId().unmarshal(data_value)
     elif data_type == "geo-shape":
@@ -52,7 +52,7 @@ def unmarshal_data_value(py_wb, main_snak):
     elif data_type == "time":
         raise NotImplementedError  # TODO
     elif data_type == "url":
-        raise NotImplementedError  # TODO
+        return py_wb.Url().unmarshal(data_value)
     elif data_type == "wikibase-form":
         raise NotImplementedError  # TODO
     elif data_type == "wikibase-lexeme":
