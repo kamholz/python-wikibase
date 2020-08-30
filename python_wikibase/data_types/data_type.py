@@ -40,7 +40,7 @@ def unmarshal_data_value(py_wb, main_snak):
     elif data_type == "external-id":
         return py_wb.ExternalId().unmarshal(data_value)
     elif data_type == "geo-shape":
-        raise NotImplementedError  # TODO
+        return py_wb.GeoShape().unmarshal(data_value)
     elif data_type == "globe-coordinate":
         return py_wb.GeoLocation().unmarshal(data_value)
     elif data_type == "math":
@@ -50,7 +50,7 @@ def unmarshal_data_value(py_wb, main_snak):
     elif data_type == "tabular-data":
         raise NotImplementedError  # TODO
     elif data_type == "time":
-        raise NotImplementedError  # TODO
+        return py_wb.Time().unmarshal(data_value)
     elif data_type == "url":
         return py_wb.Url().unmarshal(data_value)
     elif data_type == "wikibase-form":

@@ -102,3 +102,9 @@ class PyWikibase:
 
     def CommonsMedia(self):
         return CommonsMedia(self, self.api, self.language)
+
+    def Time(self):
+        return Time(self, self.api, self.language)
+
+    def GeoShape(self):
+        return GeoShape(self, self.api, self.language)

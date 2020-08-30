@@ -27,7 +27,8 @@ class Entity(Value):
         super().__init__(py_wb, api, language)
 
     def marshal(self):
-        return {"entity-type": self.entity_type, "numeric-id": int(self.entity_id[1:])}
+        # return {"entity-type": self.entity_type, "numeric-id": int(self.entity_id[1:])}
+        return {"value": self.entity_id}
 
     def _create(self, content):
         """Create a new entity with the specified label and content
