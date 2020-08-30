@@ -50,10 +50,16 @@ class References(Base):
         try:
             if value:
                 value_class = value.__class__.__name__
-                value_marshalled = {
-                    "type": class_to_data_type[value_class],
-                    "value": value.marshal(),
-                }
+                if value_class in {"Item", "Property"}:
+                    value_marshalled = {
+                        "type": "wikibase-entityid",
+                        "value": {"id": value.entity_id}
+                    }
+                else:
+                    value_marshalled = {
+                        "type": class_to_data_type[value_class],
+                        "value": value.marshal(),
+                    }
                 r = self.api.reference.add(
                     self.claim_id, prop.entity_id, value_marshalled, snak_type=snak_type
                 )
