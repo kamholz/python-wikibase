@@ -18,3 +18,10 @@ class EditError(Exception):
 
 class DuplicateError(EditError):
     pass
+
+
+#
+
+
+class ParseError(Exception):
+    pass

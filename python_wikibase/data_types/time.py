@@ -1,4 +1,8 @@
+import json
+
+from wikibase_api import ApiError
 from python_wikibase.data_types.data_type import DataType
+from python_wikibase.utils.exceptions import ParseError
 
 
 class Time(DataType):
@@ -17,5 +21,26 @@ class Time(DataType):
         return self.time
 
     def create(self, time):
+        if isinstance(time, str):
+            return self.create_from_string(time)
+        else:
         self.time = time
+        return self
+
+    def create_from_string(self, timestring, options={}):
+        if "lang" not in options:
+            options["lang"] = self.language
+        params = {
+            "action": "wbparsevalue",
+            "datatype": "time",
+            "values": timestring,
+            "options": json.dumps(options)
+        }
+        try:
+            results = self.api.api.get(params)["results"]
+        except ApiError as e:
+            raise ParseError(f"Could not parse string: {e}") from None
+        if len(results) != 1:
+            raise ParseError("Parser returned more than one time value")
+        self.time = results[0]["value"]
         return self
