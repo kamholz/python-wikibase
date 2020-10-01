@@ -24,7 +24,7 @@ class Time(DataType):
         if isinstance(time, str):
             return self.create_from_string(time)
         else:
-        self.time = time
+            self.time = time
         return self
 
     def create_from_string(self, timestring, options={}):
