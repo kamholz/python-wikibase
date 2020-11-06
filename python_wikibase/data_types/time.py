@@ -44,3 +44,8 @@ class Time(DataType):
             raise ParseError("Parser returned more than one time value")
         self.time = results[0]["value"]
         return self
+
+    def format(self):
+        params = {"action": "wbformatvalue", "datavalue": json.dumps({"value": self.time, "type": "time"})}
+        return self.api.api.get(params)["result"]
+
