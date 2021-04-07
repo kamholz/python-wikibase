@@ -2,8 +2,8 @@ from wikibase_api import ApiError
 
 from python_wikibase.base import Base
 from python_wikibase.data_model.entity import check_prop_param
-from python_wikibase.data_types.data_type import check_data_type, unmarshal_data_value
-from python_wikibase.utils.data_types import class_to_data_type
+from python_wikibase.data_types.data_type import check_data_type, unmarshal_data_value, marshal_data_type
+from python_wikibase.utils.data_types import class_to_data_type, class_to_type
 from python_wikibase.utils.exceptions import EditError
 
 
@@ -28,7 +28,7 @@ class References(Base):
         :param reference: Reference to add locally
         :type reference: Reference
         """
-        prop_id = reference.property.entity_id
+        prop_id = reference.main_property.entity_id
         if prop_id in self.references:
             self.references[prop_id].append(reference)
         else:
@@ -48,23 +48,7 @@ class References(Base):
         """
         # Create reference using API
         try:
-            if value:
-                value_class = value.__class__.__name__
-                if value_class in {"Item", "Property"}:
-                    value_marshalled = {
-                        "type": "wikibase-entityid",
-                        "value": {"id": value.entity_id}
-                    }
-                else:
-                    value_marshalled = {
-                        "type": class_to_data_type[value_class],
-                        "value": value.marshal(),
-                    }
-                r = self.api.reference.add(
-                    self.claim_id, prop.entity_id, value_marshalled, snak_type=snak_type
-                )
-            else:
-                r = self.api.reference.add(self.claim_id, prop.entity_id, None, snak_type=snak_type)
+            r = self.api.reference.add(self.claim_id, prop.entity_id, marshal_reference_value(value), marshal_data_type(value), snak_type=snak_type)
         except ApiError as e:
             raise EditError(f"Could not create reference: {e}") from None
 
@@ -147,7 +131,7 @@ class References(Base):
             raise EditError(f"Could not remove reference: {e}") from None
 
         # Remove reference from local collection
-        prop_id = reference.property.entity_id
+        prop_id = reference.main_property.entity_id
         self.references[prop_id] = [
             c for c in self.references[prop_id] if not c.reference_id == reference.reference_id
         ]
@@ -180,9 +164,34 @@ class Reference(Base):
         super().__init__(py_wb, api, language)
         self.reference_id = None
         self.claim_id = None
-        self.property = None
-        self.snak_type = None
-        self.value = None
+        self.main_property = None
+        self.reference_claims = []
+
+    def _create_claim(self, reference_claim, index):
+        if not index:
+            index = len(self.reference_claims)
+        self.reference_claims.insert(index, reference_claim)
+        self._update()
+
+    def _update(self, index=None):
+        snaks = []
+        for reference_claim in self.reference_claims:
+            snak = {
+                "property": reference_claim.property.entity_id,
+                "datavalue": marshal_reference_value(reference_claim.value),
+                "snaktype": reference_claim.snak_type
+            }
+            data_type = marshal_data_type(reference_claim.value)
+            if data_type:
+                snak["datatype"] = data_type
+            snaks.append(snak)
+
+        self.api.reference.update(
+            self.claim_id,
+            self.reference_id,
+            snaks,
+            index
+        )
 
     def unmarshal(self, claim_id, reference_data):
         """Parse API response and fill object with the provided information
@@ -194,53 +203,110 @@ class Reference(Base):
         """
         self.reference_id = reference_data["hash"]
         self.claim_id = claim_id
+        self.main_property = self.py_wb.Property()
+        self.main_property.entity_id = reference_data["snaks-order"][0]
 
-        prop_id = list(reference_data["snaks"].keys())[0]
-        main_snak = reference_data["snaks"][prop_id][0]
-        self.property = self.py_wb.Property()
-        self.property.entity_id = prop_id
-
-        # Parse snak type and value (if snak type is "value")
-        self.snak_type = main_snak["snaktype"]
-        if self.snak_type == "value":
-            self.value = unmarshal_data_value(self.py_wb, main_snak)
-            self.property.data_type = self.value.__class__.__name__
+        for prop_id in reference_data["snaks-order"]:
+            for snak in reference_data["snaks"][prop_id]:
+                reference_claim = self.py_wb.ReferenceClaim().unmarshal(snak)
+                self.reference_claims.append(reference_claim)
         return self
 
-    def set_value(self, value):
-        check_data_type(value, self.property)
+    def add(self, prop, value, index=None):
+        check_prop_param(prop)
+        check_data_type(value, prop)
+        reference_claim = self.py_wb.ReferenceClaim()
+        reference_claim.property = prop
+        reference_claim.value = value
+        reference_claim.snak_type = "value"
+        self._create_claim(reference_claim, index)
+
+    def add_no_value(self, prop, index=None):
+        check_prop_param(prop)
+        reference_claim = self.py_wb.ReferenceClaim()
+        reference_claim.property = prop
+        reference_claim.snak_type = "novalue"
+        self._create_claim(reference_claim, index)
+
+    def add_some_value(self, prop, index=None):
+        check_prop_param(prop)
+        reference_claim = self.py_wb.ReferenceClaim()
+        reference_claim.property = prop
+        reference_claim.snak_type = "somevalue"
+        self._create_claim(reference_claim, index)
+
+    def remove(self, reference_claim):
+        self.reference_claims = [x for x in self.reference_claims if x != reference_claim]
+        self._update()
+
+    def set_value(self, reference_claim, value):
+        check_data_type(value, reference_claim.property)
         try:
-            self.api.reference.update(
-                self.claim_id,
-                self.property.entity_id,
-                self.reference_id,
-                value.marshal(),
-                snak_type="value",
-            )
+            reference_claim._update_locally(value, "value")
+            self._update()
         except ApiError as e:
             raise EditError(f"Could not update reference value: {e}") from None
 
-    def set_no_value(self):
+    def set_no_value(self, reference_claim):
         try:
-            self.api.reference.update(
-                self.claim_id, self.property.entity_id, self.reference_id, None, snak_type="novalue"
-            )
+            reference_claim._update_locally(None, "novalue")
+            self._update()
         except ApiError as e:
             raise EditError(f"Could not update reference value: {e}") from None
 
-    def set_some_value(self):
+    def set_some_value(self, reference_claim):
         try:
-            self.api.reference.update(
-                self.claim_id,
-                self.property.entity_id,
-                self.reference_id,
-                None,
-                snak_type="somevalue",
-            )
+            reference_claim._update_locally(None, "somevalue")
+            self._update()
         except ApiError as e:
             raise EditError(f"Could not update reference value: {e}") from None
+
+
+class ReferenceClaim(Base):
+    def __init__(self, py_wb, api, language):
+        super().__init__(py_wb, api, language)
+        self.property = None
+        self.snak_type = None
+        self.value = None
+
+    def _update_locally(self, value, snak_type):
+        self.value = value
+        self.snak_type = snak_type
+
+    def unmarshal(self, snak):
+        """Parse API response and fill object with the provided information
+
+        :param snak: Data about the reference provided by the Wikibase API
+        :type snak: dict
+        """
+        self.property = self.py_wb.Property()
+        self.property.entity_id = snak["property"]
+
+        # Parse snak type and value (if snak type is "value")
+        self.snak_type = snak["snaktype"]
+        if self.snak_type == "value":
+            self.value = unmarshal_data_value(self.py_wb, snak)
+            self.property.data_type = self.value.__class__.__name__
+        return self
 
 
 def check_reference_param(prop, param_name="reference"):
     if not isinstance(prop, Reference):
         raise ValueError(f"{param_name} parameter must be instance of Reference class")
+
+
+def marshal_reference_value(value):
+    if value:
+        value_class = value.__class__.__name__
+        if value_class in {"Item", "Property"}:
+            return {
+                "type": class_to_type[value_class],
+                "value": {"id": value.entity_id}
+            }
+        else:
+            return {
+                "type": class_to_type[value_class],
+                "value": value.marshal(),
+            }
+    else:
+        return None

@@ -4,7 +4,7 @@ from python_wikibase.data_model.description import Description
 from python_wikibase.data_model.entity import Item, Property
 from python_wikibase.data_model.label import Label
 from python_wikibase.data_model.qualifier import Qualifier, Qualifiers
-from python_wikibase.data_model.reference import Reference, References
+from python_wikibase.data_model.reference import Reference, ReferenceClaim, References
 
 __all__ = [
     "Aliases",
@@ -17,5 +17,6 @@ __all__ = [
     "Qualifier",
     "Qualifiers",
     "Reference",
+    "ReferenceClaim",
     "References",
 ]

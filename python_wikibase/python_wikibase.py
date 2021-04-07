@@ -11,6 +11,7 @@ from python_wikibase.data_model import (
     Qualifier,
     Qualifiers,
     Reference,
+    ReferenceClaim,
     References,
 )
 from python_wikibase.data_types import *
@@ -79,6 +80,9 @@ class PyWikibase:
 
     def Reference(self):
         return Reference(self, self.api, self.language)
+
+    def ReferenceClaim(self):
+        return ReferenceClaim(self, self.api, self.language)
 
     def References(self):
         return References(self, self.api, self.language)

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 from python_wikibase.value import Value
-
+from python_wikibase.utils.data_types import class_to_data_type
 
 class DataType(Value):
     """Abstract class for Wikibase data types (see
@@ -85,3 +85,9 @@ def check_data_type(value, prop):
     data_type = value.__class__.__name__
     if data_type != prop.data_type:
         raise ValueError(f"Value must be instance of {prop.data_type} class")
+
+def marshal_data_type(value):
+    if value:
+        return class_to_data_type[value.__class__.__name__]
+    else:
+        return None

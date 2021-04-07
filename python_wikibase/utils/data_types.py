@@ -21,3 +21,15 @@ data_type_to_class = {}
 # Populate data_type_to_class
 for class_name, data_type in class_to_data_type.items():
     data_type_to_class[data_type] = class_name
+
+class_to_type = {
+    "ExternalId": "string",
+    "GeoLocation": "globecoordinate",
+    "Item": "wikibase-entityid",
+    "Math": "string",
+    "Property": "wikibase-entityid",
+    "Quantity": "quantity",
+    "StringValue": "string",
+    "Time": "time",
+    "Url": "string",
+}
