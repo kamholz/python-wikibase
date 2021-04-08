@@ -17,7 +17,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-wikibase-api = "git+https://github.com/kamholz/wikibase-api"
+wikibase-api = { git = "https://github.com/kamholz/wikibase-api.git" }
 
 [tool.poetry.dev-dependencies]
 black = "^18.3-alpha.0"
