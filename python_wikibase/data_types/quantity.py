@@ -45,10 +45,11 @@ class Quantity(DataType):
         marshalled = {}
 
         # Amount
+        amount_str = get_expanded_scientific_notation(self.amount)
         if self.amount >= 0:
-            marshalled["amount"] = f"+{self.amount}"
+            marshalled["amount"] = f"+{amount_str}"
         else:
-            marshalled["amount"] = str(self.amount)
+            marshalled["amount"] = amount_str
 
         # Unit
         if not self.unit:
@@ -71,3 +72,28 @@ class Quantity(DataType):
         self.unit = unit
 
         return self
+
+def get_expanded_scientific_notation(flt):
+    was_neg = False
+    flt_str = str(flt)
+    if not "e" in flt_str:
+        return flt
+    if flt_str.startswith("-"):
+        flt_str = flt_str[1:]
+        was_neg = True
+    str_vals = flt_str.split("e")
+    coef = float(str_vals[0])
+    if coef == int(coef):
+        coef = int(coef)
+    exp = int(str_vals[1])
+    return_val = ""
+    if int(exp) > 0:
+        return_val += str(coef).replace(".", "")
+        return_val += "".join(["0" for _ in range(0, abs(exp - len(str(coef).split(".")[1])))])
+    elif int(exp) < 0:
+        return_val += "0."
+        return_val += "".join(["0" for _ in range(0, abs(exp) - 1)])
+        return_val += str(coef).replace(".", "")
+    if was_neg:
+        return_val = f"-{return_val}"
+    return return_val
