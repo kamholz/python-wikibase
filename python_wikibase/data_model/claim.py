@@ -1,4 +1,5 @@
 from wikibase_api import ApiError
+from datetime import datetime
 
 from python_wikibase.base import Base
 from python_wikibase.data_model.entity import check_prop_param
@@ -48,9 +49,11 @@ class Claims(Base):
         # Create claim using API
         try:
             if value:
+                print(f"creating claim: {datetime.now()}")
                 r = self.api.claim.add(
                     self.item_id, prop.entity_id, value.marshal(), snak_type=snak_type
                 )
+                print(f"created claim: {datetime.now()}")
             else:
                 r = self.api.claim.add(self.item_id, prop.entity_id, None, snak_type=snak_type)
         except ApiError as e:
