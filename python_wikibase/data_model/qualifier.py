@@ -1,5 +1,4 @@
 from wikibase_api import ApiError
-from datetime import datetime
 
 from python_wikibase.base import Base
 from python_wikibase.data_model.entity import check_prop_param
@@ -49,11 +48,9 @@ class Qualifiers(Base):
         # Create qualifier using API
         try:
             if value:
-                print(f"creating qualifier: {datetime.now()}")
                 r = self.api.qualifier.add(
                     self.claim_id, prop.entity_id, value.marshal(), snak_type=snak_type
                 )
-                print(f"created qualifier: {datetime.now()}")
             else:
                 r = self.api.qualifier.add(self.claim_id, prop.entity_id, None, snak_type=snak_type)
         except ApiError as e:
